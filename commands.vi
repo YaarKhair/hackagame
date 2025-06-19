@@ -1,0 +1,6 @@
+;find string in php files
+grep -r --include=*.php "serverskilled" /var/www
+;replace strin gin php files
+find ./ -type f -exec sed -i 's/string1/string2/g' {} \;
+;count lines
+ (find . -name '*.php' -print0 | xargs -0 cat ) | wc -l

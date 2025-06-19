@@ -1,0 +1,82 @@
+<?php if ($index_refer != "!@#$%^&*()_+") { die(); } ?>
+<?php
+	echo '<div class="row">
+	<div class="col w50">
+		<table class="internet" width="100%">
+			<h1>KOTR Network</h1>';	
+	
+	$initial_serverid = $kotr['initial_serverid'];
+	$final_serverid = $kotr['initial_serverid'] + ($kotr['internet_col'] * $kotr['internet_rows']);	
+	
+	$kotr_result = mysqli_query ($link, "SELECT server.id, clan.color FROM server LEFT JOIN hacker ON server.hacker_id = hacker.id LEFT JOIN clan ON hacker.clan_id = clan.id WHERE server.id >= $initial_serverid AND server.id <= $final_serverid");
+	$col = 0;
+	
+	for($i = 0; $i < ($kotr['internet_col'] * $kotr['internet_rows']); $i ++) {
+		// table stuff
+		if ($col == 0) echo "<tr>";
+		if ($col == $kotr['internet_col']) {
+			echo "</tr>";
+			$col = 0;
+		}
+		
+		//
+		$row = mysqli_fetch_assoc ($kotr_result);
+		echo '<td style="background-color:#'.$row['color'].'; width: 50px; height: 50px; text-align:center;"><a style="font-size:45px" href="?h=serverinfo&server_id='.$row['id'].'" title="'.$row['id'].'"><font color="#000000"><strong class="w100i">&nbsp;&nbsp;&nbsp;&nbsp;</strong></font></a></td>';
+		$col++;
+	}
+	echo '</table></div>
+	<div class="col w50">';
+	
+	// Find the current winning clan
+	$points = array();
+	$last_serverid = $kotr['initial_serverid'] + ($kotr['internet_col'] * $kotr['internet_rows']);
+	$query = "SELECT hacker_id, id FROM server WHERE id >= {$kotr['initial_serverid']} AND id <= $last_serverid AND hacker_id != {$kotr['tier1_npc']} AND hacker_id != {$kotr['tier2_npc']} AND hacker_id != {$kotr['tier3_npc']} AND hacker_id != 0";
+	$result = mysqli_query($link, $query);
+	while($row = mysqli_fetch_assoc($result)) {
+		$clan_id = mysqli_get_value("clan_id", "hacker", "id" , $row['hacker_id']);
+		
+		// Set the points
+		$points4server = 0;
+		if(in_array($row['id'], $kotr['tier3_servers'])) $points4server = $kotr['points']['Tier3'];
+		if(in_array($row['id'], $kotr['tier2_servers'])) $points4server = $kotr['points']['Tier2'];
+		if(in_array($row['id'], $kotr['tier1_servers'])) $points4server = $kotr['points']['Tier1'];
+		if(isset($points[$clan_id])) $points[$clan_id] += $points4server;
+		else $points[$clan_id] = $points4server;
+
+		// Add the member to his clan members array
+		$clan_members = array();
+		$clan_members[$clan_id][] = $row['hacker_id'];
+	}
+			
+	// Print out a table of current leading clans
+	if(count($points) > 0) {
+		asort($points, SORT_NUMERIC);
+		$points = array_reverse($points, true);	// Make it descending
+		echo "<h1>Scores</h1>";
+		echo "<div class='row th light-bg'><div class='col w50'>Clan</div><div class='col w50'>Points</div></div>";
+		echo "<div class='dark-bg'>";
+		foreach($points as $clan_id => $points) 
+			echo "<div class='row hr-light'><div class='col w50'>".mysqli_get_value("alias", "clan", "id", $clan_id)."</div><div class='col w50'>".$points."</div></div>";
+		echo "</div>";
+	}
+	echo '</div>';
+	echo '</div>';
+		
+	// Logs
+	$lines = '';
+	$query = "SELECT date, details FROM log WHERE event = 'kotr' AND date <= '$now' AND deleted = 0 ORDER BY date DESC, id DESC LIMIT 10";
+	$result = mysqli_query($link, $query);
+	if (mysqli_num_rows($result) == 0) {
+		$lines = 'Log empty.';
+	}
+	else {
+		while($logdata = mysqli_fetch_assoc($result)) {
+			$lines .= Number2Date($logdata['date']).' | '.$logdata['details'].PHP_EOL;
+		}
+	}
+
+?>
+	<br><h2>Last 10 King Of The Ring logs</h2>
+	<div class="row">
+		<textarea class="w100i h450 monospace" readonly><?php echo $lines; ?></textarea>
+	</div>	

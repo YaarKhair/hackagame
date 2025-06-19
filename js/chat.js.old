@@ -1,0 +1,133 @@
+var Chat = {
+    key: "<?php echo sha1($hackerdata['last_login'].$hackerdata['started']); ?>",
+    textField: document.getElementById("msg"),
+    prevMessage: "",
+    prevWhisper: "",
+    emojiPopup : false,
+    clan_id: <?=$hackerdata['clan_id']; ?>,
+    init: function() {
+        Chat.actionsMonitor();
+        Chat.updateChat();
+        Chat.updateUsersList();
+        Chat.displayEmoji();
+        Chat.attachHandlerEmoji();
+    },
+    room: 0,
+    actionsMonitor: function() {
+        Chat.textField.addEventListener("keyup", function(a) {
+            if (a.keyCode == 13) {
+                Chat.sendMessage();
+                Chat.textField.value = ""
+            }
+            if (a.keyCode == 38) {
+                Chat.getPrevMessage()
+            }
+            if (a.keyCode == 37 && Chat.textField.value.length == 0) {
+                Chat.getWhisper();
+            }
+        });
+        document.getElementById("chat-button").addEventListener("click", function(a) {
+            Chat.sendMessage();
+            Chat.textField.value = "";
+            a.preventDefault()
+        });
+        /*document.getElementById("public_chat").addEventListener("click", function(a) {
+          Chat.setChat(0);       
+          Chat.updateChat();
+        });
+        document.getElementById("clan_chat").addEventListener("click", function(a) {
+          Chat.setChat(Chat.clan_id);    
+          Chat.updateChat();
+        });*/
+    },
+    setChat: function(v) {
+      Chat.room = v;      
+    },                                                            
+    isWhisper: function(m) {
+        if (m.substring(0, 3) == "/w|") return true;
+        else return false;
+    },
+    saveWhisper: function(w) {
+        w = w.split("|");
+        w = w[0] + '|' + w[1] + '|';
+        Chat.prevWhisper = w;
+    },
+    updateOutput: function(a) {
+        if (a === "kicked" || a === "offline" || a === "banned" || a === "hybernated" || a === "prison") {
+            window.location.reload()
+        } else if (a.length > 1) {
+            var b = document.getElementById("chat-window");
+            b.innerHTML = a;
+            b.scrollTop = b.scrollHeight
+        }
+    },
+    sendMessage: function() {
+        var a = "chat.php?msg=" + encodeURIComponent(Chat.textField.value) + "&code=" + Chat.key + "&room=" + Chat.room;
+        if (Chat.isWhisper(Chat.textField.value)) Chat.saveWhisper(Chat.textField.value);
+        AJAX.load(a, function(b) {
+            Chat.updateOutput(b);
+        })
+        Chat.prevMessage = Chat.textField.value;
+    },
+    updateChat: function() {
+        var a = "chat.php?all=1&code=" + Chat.key + "&room=" + Chat.room;
+        AJAX.load(a, function(b) {
+            Chat.updateOutput(b);
+        });
+        setTimeout(Chat.updateChat, 5000)
+    },
+    updateUsersList: function() {
+        var a = "pages/ajax_chatuserlist.php?code=" + Chat.key;
+        AJAX.load(a, function(b) {
+            if (b === "timeout" || b === "kicked" || b === "offline" || b === "banned" || b === "hybernated" || b === "prison") {
+                window.location.reload();
+            } else {
+                var c = document.getElementById("users");
+                c.innerHTML = b;
+            }
+        });
+        setTimeout(Chat.updateUsersList, 7000);
+    },
+    setPrevMessage: function() {
+        if (Chat.textField.value !== "") {
+            Chat.prevMessage = Chat.textField.value
+        }
+    },
+    getPrevMessage: function() {
+        Chat.textField.value = Chat.prevMessage
+    },
+    getWhisper: function() {
+        Chat.textField.value = Chat.prevWhisper;
+    },
+    whisper: function(a) {
+        Chat.textField.value = "/w|" + a + "|";
+        Chat.textField.focus()
+    },
+    displayEmoji: function () {
+      var elem = document.getElementById("emoji_button");
+      elem.onclick = function () {
+        var span = document.getElementById("emoji_box");
+        if (Chat.emojiPopup == false) {
+          Chat.emojiPopup = true;
+          span.style = "visibility: visible; top: 390px; left: 74%;";
+        } else {
+          Chat.emojiPopup = false;
+          span.style = "visibility: hidden";
+        }
+      }
+    },
+    attachHandlerEmoji : function() {
+      var emojis = document.getElementsByClassName("emoji");
+      console.log(emojis[0]);
+      for(var i = 0; i < emojis.length; i++) {
+        emojis[i].onclick = function () {
+          console.log(emojis[i].dataset.code);
+          Chat.insertEmojiText(emojis[i].dataset.code);
+        }
+      }
+    },
+    insertEmojiText : function(t) {
+      Chat.textField.value += t;
+    }
+};
+Chat.init();

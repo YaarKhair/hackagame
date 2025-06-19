@@ -1,0 +1,86 @@
+<?php if ($index_refer != "!@#$%^&*()_+") { die(); } ?>
+<?php
+	include ("modules/permissions.php");
+	
+	$_SESSION['loaded'] = 0; // anti refresh (server placement)
+	$server_id = 0;
+	if (!empty($_GET['server_id'])) $server_id = intval($_GET['server_id']);
+	
+	$canview = false;
+	if ($server_id > 0 && $server_id <= $internet_size) $canview = true;
+	if (in_array($server_id, $kotr['all_servers'])) $canview = true;
+	if (InGroup($hackerdata['id'], 1) || InGroup($hackerdata['id'], 2)) $canview = true;
+	if (!$canview) return "Invalid server ID.";
+	
+	$query = "SELECT hacker.id, hacker2.id as prev_id, server.ip as serverip, server.id as server_id, clan.id as clan_id, server.firewall, server.infecter_id, server.executer_id, server.infection_hackerid FROM (server LEFT JOIN hacker ON server.hacker_id = hacker.id) LEFT JOIN hacker as hacker2 ON server.previous_ownerid = hacker2.id LEFT JOIN clan ON hacker.clan_id = clan.id WHERE server.id = ".$server_id;
+	$result = mysqli_query($link, $query);
+	if (mysqli_num_rows($result) == 0) 
+		return "Server not found.";
+		
+	if ($hackerdata['network_id'] != 2) return "You are connected to n00bNET. The function you are trying to use is unavailable from this network.";
+	
+	// read server details
+	$row = mysqli_fetch_assoc($result);
+	
+	//  server sniffer
+	$serversniffer = HasInstalled($hackerdata['id'],"SERVERSNIFFER", true);
+	if (!$serversniffer && ($row['id'] > 0 && $row['id'] != $hackerdata['id']) && !$is_staff) return "No server sniffer installed.";
+		
+	
+	// previous owner
+	if ($row['prev_id'] == 0) $prev_owner = "-";
+	else $prev_owner = ShowHackerAlias($row['prev_id']);
+	// ip
+	$ip = $row['serverip'];
+	$strength = '-';
+	
+	if ($row['id'] > 0) {
+		$owned = true;
+		//$owner = ShowHackerAlias($row['id'])."<br>".ShowAvatar($row['id']);
+		//$clan = ShowClanAlias($row['clan_id']);
+		//$servername = GetServerName($server_id);
+		if ($serversniffer == 85) {
+			if ($row['firewall'] <= 33) $strength = "Weak";
+			elseif ($row['firewall'] <= 66) $strength = "Normal";
+			else $strength = "Strong";
+		}	
+	}
+	else { 
+		$owned = false;
+		//$owner = "-";
+		//$clan = "-";
+		//$servername = "-";
+		$software = "-";
+	}
+	
+	// display info
+	echo '
+		<h2>Server Info</h2>
+			<div class="light-bg">
+			<div class="row hr-light"><div class="col w30">IP Address:</div><div class="col w70">'.$ip.'</div></div>
+			<div class="row hr-light"><div class="col w30">Firewall health:</div><div class="col w70">'.$strength.'</div></div>';
+			if (!$owned) { echo '<div class="row hr-light"><div class="col w30">Price:</div><div class="col w70">'.$currency.number_format($server_price).'</div></div>'; }
+			
+		
+	echo '<div class="row hr-light"><div class="col w30">Owned:</div>';
+		// it's free
+		if ($owned == false) {
+			echo '<div class="col w70">No';
+			//if ($hackerdata['clan_id'] > 0) echo ' [<a href="?h=doserver&action=buy&id='.$server_id.'">Buy server</a>]';
+			//else echo ' [You are not in a clan]';
+			echo '</div>';
+		}
+		else echo '<div class="col w70">Yes</div>'; // or it's taken
+	echo '</div>';	
+	
+	// mod options	
+	if (InGroup($hackerdata['id'], 1) || InGroup($hackerdata['id'], 2)) {
+		echo '
+		<br><br>
+			<h2>Staff</h2>
+				<div class="row hr-light"><div class="col w30">Cluster Security</div><div class="col w70">'.ServerSecurityLevel ($server_id, $row['clan_id']).'</div></div>
+				<div class="row hr-light"><div class="col w30">Last Infecter</div><div class="col w70">'.ShowHackerAlias ($row['infecter_id']).'</div></div>
+				<div class="row hr-light"><div class="col w30">Last Executer</div><div class="col w70">'.ShowHackerAlias ($row['executer_id']).'</div></div>
+				<div class="row hr-light"><div class="col w30">Infection owner</div><div class="col w70">'.ShowHackerAlias ($row['infection_hackerid']).'</div></div>';
+	}	
+?>

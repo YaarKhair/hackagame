@@ -1,0 +1,130 @@
+-----
+Intro
+-----
+
+The MissionPack editor is shipped with HackTheGame versions 1.20 and up. You can find it in the MissionPack folder. Just run MissionPackCreator.exe to start making a whole new hacking game yourself. With it you can:
+
+- make new MissionPacks, thus making a new HackTheGame version
+- edit the original game
+- get world fame by making HackTheGame even cooler than it already was ;-)
+
+
+-----
+Email
+-----
+
+The first thing you need to do is make a good email. Here are some guidelines.
+There are variables you should use to make the email work with the game:
+
+{hacker}          : the name of the player
+{own_ip}          : IP of the player (explain telnetlogs in first mission)
+{attack_ip}       : IP of the remote system we need to attack (ALWAYS REQUIRED)
+{attack_port}     : Port of remote system (OPTIONAL IF PORTSCANNER)
+{random_login}    : Loginname for the remote system (ALWAYS REQUIRED)
+{random_password} : Password for the remote system (OPTIONAL IF PASSWORD HACKER)
+
+Make sure you don't create uncompleteable missions, such as not giving a port of the remote host, whilst the player doesn't even have a portscanner. This will make your mission (and missionpack) unplayable and useless. So in the first few missions, let them gather the tools.
+
+
+Below is a list of the supported tools you can give to the hacker during missions. So, you need to include them in the FileSystem (read below for FileSystem instructions) at some point in the game. The names are (case insesitive):
+
+PORTSCANNERW32.EXE    : a portscanner
+DESTROYFILEW32.EXE    : a file whiper (better than deleting)
+PASSWORDHACKERW32.EXE : a brute force password hacker
+VIRUSUPLOADERW32.EXE  : a remote host infector, with a list of nasty virii
+
+
+You can choose to let them download all these tools in the first mission, but it's nicer to build it up. So at fist you help them out a lot by giving the IP, port, login and password of the remote system. But when they aquire the portscanner, you don't have to supply the port anymore and let them scan for ports. All of this will add fun to the game.
+
+
+----------
+Objectives
+----------
+
+In this version there are 3 objectives you can give to the player.
+
+Infect the host with a virus : 
+- upload a virus to the remote host
+- player needs VIRUSUPLOADER32 installed
+
+Steal file(s) from the remote host:
+- steal 1 or more files which can be hidden in any subfolder
+- player needs GetFile, which he has by default
+
+Kill file(s) from the remote host:
+- whipe (not delete!) 1 or more files which can be hidden in any subfolder
+- player needs DESTROYFILE32 installed
+
+NOTE: If you ask a player to whipe 1 or more files, and the player deletes the files (using the internal del-command) instead of using whipe, the game is virtually over. The file can not be whiped anymore, so the mission, and the game are unfinishable. Be sure to inform your player of that fact.
+
+
+----------
+FileSystem
+----------
+
+In the filesystem is where you tell the game which file is where on the remote host. This is the place you say where the files he needs to whipe, kill, delete or download are. Be creative! 
+
+The format is simple:
+
+-file1
+-file2
++folder1
+-file3
+-file4
++folder2
+-file5
+
+
+Let me explain:
+file1 is in the root, just like file2
+file3 is in a folder called folder1, just like file 4
+file5 is in a folder called folder2
+
+Folder and files can have any name, but only try to use ASCII characters. Also, don't make them too long. This will mess up the gameplay or could probably even crash the game at some point.
+
+
+------------
+Telnet login
+------------
+
+This is the welcome screen the players see when they connect to the remote host with telnet. Use your best ASCII art and try to make something of it. I've included a little tool in the 'Tool' folder called image2text.exe, which can convert any image to ASCII. Give it a try, experiment with it. These login screens are what make the game cool. You can also steal some out of the original game if you are lazy ;-)
+
+HINT: Google for \"ASCII art\" and find many, many useable ASCII graphics
+
+An example:
+|``````````````,!!!!!!!!!,````````````````|
+|```````````.!!!!!!!!!!!!!!!!!.```````````|
+|`````````.!!!!!\"\"```````\"\"!!!!!.`````````|
+|````````!!!!\"``,ssMMMss,``\"!!!!``````````|
+|```````!!\"``.sMMMMMMMMMMMMMs.``\"!!```````|
+|``````!!``.MMMMMM\"MMMMM\"MMMMMM.``!!``````|
+|`````!!`.MMMMMMM!`!MMM!`!MMMMMMM.`!!`````|
+|````!!`.MMMMMMMM\"`\"MMM\"`\"MMMMMMMM.`!!````|
+|```!s`.MMMMMMMMs```sMs```sMMMMMMMM.`s!```|
+|`.:sM`sMMMMMMMM!```!M!```!MMMMMMMMs`Ms:.`|
+|:!sM!:MMMM\"MMMM:```:M:```:MMMM\"MMMM:!Ms!:|
+|!ssM`sMMM\"`sMMM!```!M!```!MMMs`\"MMMs`Mss!|
+|ssMs`MM\"`\"MMMMMs```sMs```sMMMMM\"`\"MM`sMss|
+|ssMs`Ms.s`sMMMMM.`.MMM.`.MMMMMs`s.sM`sMss|
+|!ssM`MMsMs`MMMMM!`!MMM!`!MMMMM`sMsMs`Mss!|
+|\"!sM!:MMMM`\"MMMMM.MMMMM.MMMMM\"`MMMM:!Ms!\"|
+|!ssM`MMsMs`MMMMM!`!MMM!`!MMMMM`sMsMs`Mss!|
+|\"!sM!:MMMM`\"MMMMM.MMMMM.MMMMM\"`MMMM:!Ms!\"|
+|`\"!sM`sMMMs`\"MMMMMMMMMMMMMMM\"`sMMMs`Ms!\"`|
+|```\"!`\"MMMM.`\"MMMMMMMMMMMMM\"`.MMMM\"`!\"```|
+|```````\"MMMMs``\"\"MMMMMMM\"\"``sMMMM\"```````|
+|````````\"MMMMs.````\"\"\"````.sMMMM\"````````|
+|``````````\"MMMMs,`````,sMMMM\"````````````|
+|````````````\"sMMMMMmmmMMMMMs\"````````````|
+|```````````````\"\"ssMMMss\"\"```````````````|
+|-----------------------------------------|
+| PLEASE IDENTIFY YOURSELF TO THIS SYSTEM |
+'-----------------------------------------'
+
+
+Thats about it. This is all the info you need to make cool new mission packs.
+
+I hope this MissionPack Editor/Creator will cause a lot of people to making lot's of new missions for HackTheGame. If you made a great mission pack, and want it shipped with the next version of HackTheGame, then zip your new missionpack up and mail it to hackthegame@nospam.chaozz.nl (remove nospam. )
+
+
+Have phun!

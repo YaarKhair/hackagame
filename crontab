@@ -1,0 +1,20 @@
+# For example, you can run a backup of all your user accounts
+# at 5 a.m every week with:
+# 0 5 * * 1 tar -zcf /var/backups/home.tgz /home/
+#
+# For more information see the manual pages of crontab(5) and cron(8)
+#
+# m h  dom mon dow   command
+1 * * * * nice -n 19 ionice -c2 -n7 php5 -q /var/www/backend/cron_1hourly.php
+1 11,23 * * * nice -n 19 ionice -c2 -n7 php5 -q /var/www/backend/cron_12hourly.php
+*/2 * * * * nice -n 19 ionice -c2 -n7 php5 -q /var/www/__cr0n/cron_2m.php
+*/5 * * * * nice -n 19 ionice -c2 -n7 php5 -q /var/www/__cr0n/cron_5m.php
+1 * * * * nice -n 19 ionice -c2 -n7 php5 -q /var/www/__cr0n/cron_1h.php
+31 * * * * nice -n 19 ionice -c2 -n7 php5 -q /var/www/__cr0n/cron_1h2.php
+0 4,10,16,22 * * * nice -n 19 ionice -c2 -n7 php5 -q /var/www/__cr0n/cron_6h.php
+1 12 * * * nice -n 19 ionice -c2 -n7 php5 -q /var/www/__cr0n/cron_24h2.php
+59 23 * * * nice -n 19 ionice -c2 -n7 php5 -q /var/www/__cr0n/cron_24h.php
+1 1 * * * nice -n 19 ionice -c2 -n7 php5 -q /var/www/__cr0n/cron_economy.php
+1 16 * * 5 nice -n 19 ionice -c2 -n7 php5 -q /var/www/__cr0n/cron_lottery.php
+0 13 * * * nice -n 19 ionice -c2 -n7 /etc/backup.sh
+0 12 1 * * nice -n 19 ionice -c2 -n7 php5 -q /var/www/__cr0n/cron_mail.php

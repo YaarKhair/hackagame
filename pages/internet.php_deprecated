@@ -1,0 +1,240 @@
+<?php if ($index_refer != "!@#$%^&*()_+") { die(); } ?>
+<?php include ("modules/permissions.php"); ?>
+<script language="JavaScript" type="text/javascript">
+	<!--
+    	window.onpageshow = function(event) {
+          if (event.persisted) {
+            draw_list();
+            }
+        };
+
+		function draw_list () {
+		    // lets draw an x in all server in the array
+			var server_num = 0;
+		    val = document.getElementById('server_arr');
+		    if (!val || val.value == '') { }
+		    else {
+				var selected_char = 'X';
+				var index;
+				var server_list = new Array();
+				server_list = document.getElementById("server_arr").value.split(";");
+				server_num = server_list.length;
+				for (index = 0; index < server_list.length; ++index) {    		
+					document.getElementById("server("+server_list[index]+")").innerHTML = selected_char;
+				}    
+			}
+			// Update the counter
+			document.getElementById("server_count").value = "Buy selected servers ("+server_num+" x <?php echo $currency.number_format($server_price) ?>)";
+	    }
+	    
+	    function click_server (server_id) {
+	         var selected_char = 'X';
+	         var clicked = document.getElementById("server("+server_id+")").innerHTML; // check if the square you clicked has an x
+	         if (clicked == selected_char) 	
+				 remove_server(server_id);
+	         else 
+				 add_server(server_id);
+	    }
+
+    	function delete_list(){
+		    // lets remove all x's of thes servers in server_arr
+		    var val = document.getElementById("server_arr");
+		    if (!val || val.value == '') return;
+		    
+    		var index;
+    		var server_list = new Array();
+    		server_list = document.getElementById("server_arr").value.split(";");
+			
+			for (index = 0; index < server_list.length; ++index) {    		
+		        document.getElementById("server("+server_list[index]+")").innerHTML = '';
+		    }    
+
+			// update the server array
+            document.getElementById("server_arr").value = '';			
+			draw_list();
+        }
+        		
+		function remove_server (server_id) {
+            // remove a server from the list
+		    var input = document.getElementById("server_arr");
+		    var server_list = input.value.split(";");
+		    var index;
+		    var new_server_string = '';
+		    
+		    for(index=0; index < server_list.length; index++) {
+		        if(server_list[index] == server_id) {
+		            // Found a match. 
+	                document.getElementById("server("+server_id+")").innerHTML = ''; // kill the X
+		        }
+		        else {
+		            if(new_server_string.length == 0) new_server_string = server_list[index];
+		            else new_server_string += ";"+server_list[index];
+		        }
+		    }
+		    document.getElementById("server_arr").value = new_server_string; // Put the new server string in the values
+			draw_list();
+		}
+		
+		function add_server (server_id) {
+			// select a server for purchase
+    		var servers_array = document.getElementById("server_arr").value;
+    		
+			if(servers_array.length > 0) servers_array = servers_array + ";" + server_id;
+			else servers_array = server_id;
+            
+            document.getElementById("server_arr").value = servers_array; // Put the new server string in the values
+            draw_list();				
+		}
+	//-->
+</script>
+<?php 
+	if ($hackerdata['network_id'] != 2)
+		return "You are connected to ".mysqli_get_value("name", "network", "id", 1).". The function you are trying to use is unavailable from this network.";
+
+	$version = 1;
+	$limit = $internet_cols * $internet_rows;
+	if (!empty($_GET['version'])) {
+		$version = intval($_GET['version']);
+		if ($version != 1 && (!InGroup($hackerdata['id'], 1) && !InGroup($hackerdata['id'], 2))) $version = 1;
+		if ($version == 2) $limit = $internet_cols * $internet_rows.", ".intval($internet_cols * $internet_rows *2);
+	}
+	$ip = ""; // hostname or IP
+	if (!empty($_GET['ip'])) { 
+		if (!HasInstalled($hackerdata['id'],"SERVERSNIFFER") && !$is_staff) return "No server sniffer installed.";
+		else $ip = strtolower(sql($_GET['ip'])); 
+
+		$ping_msg = "";
+		
+		// if we're pinging a hostname, we must first find the IP of this server
+		if (substr($ip, 0, 6) == "server")
+		{
+			// this is a hostname
+			$hostname = substr($ip, 6, strlen($ip) -6); // the hostname without the prefix "server", so we're left with 123.alias.htg
+			$hostname_part = explode(".", $hostname);
+			$server_id = $hostname_part[0];
+			$ip = mysqli_get_value ("ip", "server", "id", $server_id); // get the IP of this hostname
+		}	
+		
+		// ping the IP		
+		$result = mysqli_query($link, "SELECT id FROM server WHERE ip = '$ip' AND hacker_id > 0");
+		if (mysqli_num_rows($result) > 0) {
+			$row = mysqli_fetch_assoc($result);
+			$ping_msg = "Pinging $ip with 32 bytes of data:<br>";
+			$ping_msg .= "Reply from $ip <1ms<br>Reply from $ip <1ms<br>Reply from $ip <1ms<br>Reply from $ip <1ms<br>";
+		}
+		
+		if ($ping_msg == "") $ping_msg = "Ping request could not find host $ip. Please check the name and try again.";
+		
+		PrintMessage ("info", $ping_msg);
+	}
+	
+	if (!HasInstalled($hackerdata['id'],"SERVERSNIFFER") && !$is_staff) return "No server sniffer installed.";
+
+	/*$subnet = "";
+	if (!empty($_GET['subnet'])) { 
+		$subnet = sql($_GET['subnet']); 
+	}*/
+	$gateways = 0;
+	if (!empty($_GET['gateways']) && $is_staff) { 
+		$gateways = 1;
+	}
+
+	echo '
+	<form action="index.php" method="POST">
+	    <input type="hidden" name="h" value="dobuyserver"/>
+		<input type="hidden" name="server" id="server_arr" value=""/>
+		<input type="submit" value="Buy selected servers (0 x '.$currency.number_format($server_price).')" id="server_count"/>
+	</form>
+	    <input type="submit" value="Deselect all" onclick="delete_list();"/>
+	<table class="internet" width="100%">
+		<h1>Internet Map</h1>';	
+		$gateway_id = GetGateway ($hackerdata['clan_id']);
+		$result = mysqli_query($link, "SELECT server.product_id, server.id, server.infection_id, server.infection_hackerid, clan.color, server.ip, server.gateway, server.hacker_id, hacker.alias, hacker.hybernate_till, infecter.clan_id FROM server LEFT JOIN hacker AS infecter ON server.infection_hackerid = infecter.id lEFT JOIN hacker ON server.hacker_id = hacker.id LEFT JOIN clan ON hacker.clan_id = clan.id ORDER BY id LIMIT $limit");
+		$server_col = 1;
+	
+		$gateway_char = '@';
+		$hibernation_char = '-';
+		$ping_char = '#';
+		$infected_char1 = "%";
+		$infected_char2 = "$";
+		$yours_char = "!";
+	
+		$num_gateways = 0;
+		$num_hibernating = 0;
+		$num_infected1 = 0;
+		$num_infected2 = 0;
+	
+		while ($row = mysqli_fetch_assoc($result)) {
+		
+			$short = "&nbsp;";
+			if ($row['hybernate_till'] >  $now) {
+				$short = $hibernation_char; // people in hibernation
+				$num_hibernating ++;
+			}	
+			// below hibernation icon so it overwrites the hibernation sign
+			if ($row['hacker_id'] == $hackerdata['id']) $short = $yours_char; // your own servers
+			if ($row['id'] == $gateway_id) $short = $gateway_char; // your own gateway
+			if ($row['gateway'] == 1) {
+				if ($gateways == 1) $short = $gateway_char; // mods option to show all gateways
+				$num_gateways ++;
+			}
+			// infected
+			if ($row['infection_id'] > 0) {
+				$show_infection = false;
+				// server is infected. but is it infected by you or your clan? else don't show it
+				if ($row['clan_id'] > 0 && $row['clan_id'] == $hackerdata['clan_id']) $show_infection = true; //owned by your clan
+				if ($row['infection_hackerid'] == $hackerdata['id']) $show_infection = true; //owned by you
+				if (InGroup($hackerdata['id'], 1) || InGroup($hackerdata['id'], 2)) $show_infection = true; //staff
+				
+				if ($show_infection) {
+					if ($row['infection_id'] == 79) {
+						$short = $infected_char1;
+						$num_infected1 ++;
+					}	
+					if ($row['infection_id'] == 84) {
+						$short = $infected_char2;
+						$num_infected2 ++;
+					}	
+				}	
+			}	
+			$font = 'monospace';
+			if ($row['ip'] == $ip) $short = $ping_char; // ping a server
+			//if (strtolower($row['alias']) == strtolower($subnet) && $row['hacker_id'] <> 0) $short = $ping_char; // subnet scan
+		
+			// empty server
+			if ($row['hacker_id'] == 0) {
+				$short = '<font color="#FFFFFF">
+							<a href="#" onclick="return false;" title="'.$row['id'].'">
+							<span id="server('.$row['id'].')" class="monospace">
+							'.$short.'
+							</span>
+							</a>
+							</font>'; // white text on free servers
+				$color = "000000";							// black background
+				$target = '';
+			}	
+			else {
+				$short = '<font color="#000000"><strong><span class="monospace">'.$short.'</span></strong></font></a>';  // black text on owned servers
+				if ($row['cloak_color'] != '' && $row['product_id'] == 82) $color = $row['cloak_color'];    // cloaked when color is set and cloak software is installed
+				else $color = $row['color']; 					// clan color for cell background
+				$id = '';
+				$target = '<a class="clean" href="?h=serverinfo&server_id='.$row['id'].'" title="'.$row['id'].'">';
+			}	
+		
+			// table stuff
+			if ($server_col == 1) { echo "<tr>".PHP_EOL; }					// start a new row
+		
+			echo '<td style="background-color:#'.$color.'; text-align:center;" onclick="click_server ('.$row['id'].')" >'.$target.$short.'</td>'.PHP_EOL; // print the cell
+		
+			if ($server_col == $internet_cols) { echo "</tr>"; $server_col = 0; }	// end of row
+			$server_col++;
+		}
+	echo '</table>';
+	echo 	$gateway_char.' = Gateway ('.$num_gateways.')<br>'.
+			$hibernation_char.' = Hibernating ('.$num_hibernating.')<br>'.
+			$yours_char.' = Your servers<br>'.
+			$ping_char.' = Pinged Server<br>'.
+			$infected_char1.' = Infected with Health Drainer by your clan ('.$num_infected1.')<br>'.
+			$infected_char2.' = Infected with Revenue Stealer by your clan ('.$num_infected2.')<br>'.
+			'X = Currently selected';
+?>
